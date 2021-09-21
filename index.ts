@@ -44,13 +44,20 @@ const handleRequest = async (req: Request): Promise<Response> => {
   try {
     const options: ConvertOptions = {
       ...getOptionsFromUrl(req.url),
-      fonts: [await Deno.readFile("./Roboto-Thin.ttf")],
+      fonts: await Promise.all([
+        Deno.readFile("NotoSansJP-Black.otf"),
+        Deno.readFile("NotoSansJP-Bold.otf"),
+        Deno.readFile("NotoSansJP-Light.otf"),
+        Deno.readFile("NotoSansJP-Medium.otf"),
+        Deno.readFile("NotoSansJP-Regular.otf"),
+        Deno.readFile("NotoSansJP-Thin.otf"),
+      ]),
       defaultFontFamily: {
-        sansSerifFamily: "Roboto Thin",
-        serifFamily: "Roboto Thin",
-        cursiveFamily: "Roboto Thin",
-        fantasyFamily: "Roboto Thin",
-        monospaceFamily: "Roboto Thin",
+        sansSerifFamily: "Noto Sans JP",
+        serifFamily: "Noto Sans JP",
+        cursiveFamily: "Noto Sans JP",
+        fantasyFamily: "Noto Sans JP",
+        monospaceFamily: "Noto Sans JP",
       },
     };
 
