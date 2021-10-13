@@ -2,6 +2,7 @@ import {
   ConverterOptions,
   ConvertOptions,
   initialize,
+  parseMarkdown,
   svg2png,
 } from "./deps.ts";
 
@@ -15,7 +16,7 @@ const getOptionsFromUrl = (url: string): ConvertOptions => {
   }
 };
 
-const getSvgUrl = (source: string): string | Response => {
+const getSvgUrl = (source: string): string | undefined => {
   try {
     const { href, origin } = new URL(source);
     const svgPath = new URL(
@@ -23,7 +24,7 @@ const getSvgUrl = (source: string): string | Response => {
     );
     return svgPath.toString();
   } catch (e) {
-    return new Response("Invalid URL", { status: 400 });
+    return undefined;
   }
 };
 
@@ -64,7 +65,16 @@ const handleRequest = async (req: Request): Promise<Response> => {
     };
 
     const svgUrl = getSvgUrl(req.url);
-    if (svgUrl instanceof Response) return svgUrl;
+    if (svgUrl === undefined) {
+      return new Response(
+        parseMarkdown(await Deno.readFile("./README.md")),
+        {
+          headers: {
+            "content-type": "text/html",
+          },
+        },
+      );
+    }
 
     const svg = await fetchSvg(svgUrl);
     if (svg instanceof Response) return svg;
