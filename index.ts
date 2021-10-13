@@ -1,4 +1,9 @@
-import { ConvertOptions, svg2png } from "./svg2png.ts";
+import {
+  ConverterOptions,
+  ConvertOptions,
+  initialize,
+  svg2png,
+} from "./deps.ts";
 
 const getOptionsFromUrl = (url: string): ConvertOptions => {
   try {
@@ -18,9 +23,7 @@ const getSvgUrl = (source: string): string | Response => {
     );
     return svgPath.toString();
   } catch (e) {
-    return new Response("Invalid URL", {
-      status: 400,
-    });
+    return new Response("Invalid URL", { status: 400 });
   }
 };
 
@@ -34,15 +37,14 @@ const fetchSvg = async (svgUrl: string): Promise<string | Response> => {
       statusText: response.statusText,
     });
   } catch (e) {
-    return new Response(`${e}`, {
-      status: 500,
-    });
+    return new Response(`${e}`, { status: 500 });
   }
 };
 
 const handleRequest = async (req: Request): Promise<Response> => {
   try {
-    const options: ConvertOptions = {
+    await initialize(Deno.readFile("./svg2png_wasm_bg.wasm")).catch(() => {});
+    const options: ConverterOptions = {
       ...getOptionsFromUrl(req.url),
       fonts: await Promise.all([
         Deno.readFile("NotoSansJP-Black.otf"),
