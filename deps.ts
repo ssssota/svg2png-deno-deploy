@@ -1,2 +1,3 @@
-export * from "https://esm.sh/svg2png-wasm@0.6.1";
-export { parseMarkdown } from "https://deno.land/x/markdown_wasm/mod.ts";
+export * from "https://cdn.skypack.dev/svg2png-wasm@1.1.0?dts";
+export * from "https://deno.land/x/markdown_wasm@1.2.2/mod.ts";
+export { listenAndServe } from "https://deno.land/std@0.111.0/http/server.ts";

@@ -1,7 +1,15 @@
+// deno run --allow-net --allow-read --watch ./index.ts
+
+/// <reference no-default-lib="true"/>
+/// <reference lib="dom" />
+/// <reference lib="dom.asynciterable" />
+/// <reference lib="deno.ns" />
+
 import {
   ConverterOptions,
   ConvertOptions,
   initialize,
+  listenAndServe,
   parseMarkdown,
   svg2png,
 } from "./deps.ts";
@@ -10,7 +18,8 @@ const getOptionsFromUrl = (url: string): ConvertOptions => {
   try {
     const { searchParams } = new URL(url);
     const scale = Number(searchParams.get("svg2png-scale")) || 1;
-    return { scale };
+    const backgroundColor = searchParams.get("svg2png-background") || undefined;
+    return { scale, backgroundColor };
   } catch (e) {
     return {};
   }
@@ -44,8 +53,19 @@ const fetchSvg = async (svgUrl: string): Promise<string | Response> => {
 
 const handleRequest = async (req: Request): Promise<Response> => {
   try {
-    await initialize(Deno.readFile("./svg2png_wasm_bg.wasm")).catch(() => {});
-    const options: ConverterOptions = {
+    const svgUrl = getSvgUrl(req.url);
+    if (svgUrl === undefined) {
+      return new Response(
+        parseMarkdown(await Deno.readFile("./README.md")),
+        { headers: { "content-type": "text/html" } },
+      );
+    }
+
+    const svg = await fetchSvg(svgUrl);
+    if (svg instanceof Response) return svg;
+
+    await initialize(Deno.readFile("./svg2png.wasm")).catch(() => {});
+    const options: ConverterOptions & ConvertOptions = {
       ...getOptionsFromUrl(req.url),
       fonts: await Promise.all([
         Deno.readFile("NotoSansJP-Black.otf"),
@@ -64,21 +84,6 @@ const handleRequest = async (req: Request): Promise<Response> => {
       },
     };
 
-    const svgUrl = getSvgUrl(req.url);
-    if (svgUrl === undefined) {
-      return new Response(
-        parseMarkdown(await Deno.readFile("./README.md")),
-        {
-          headers: {
-            "content-type": "text/html",
-          },
-        },
-      );
-    }
-
-    const svg = await fetchSvg(svgUrl);
-    if (svg instanceof Response) return svg;
-
     const buf = await svg2png(svg, options);
     return new Response(buf, {
       headers: {
@@ -92,6 +97,4 @@ const handleRequest = async (req: Request): Promise<Response> => {
   }
 };
 
-addEventListener("fetch", async (event) => {
-  event.respondWith(handleRequest(event.request));
-});
+await listenAndServe(":8080", handleRequest);
